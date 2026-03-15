@@ -3,7 +3,6 @@ package com.parea.backend.security;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -14,8 +13,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.cors.CorsConfigurationSource;
-
-import java.util.List;
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
@@ -29,37 +27,35 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // 1. Force CORS configuration directly in the filter chain
+                // 1. Link the CORS source
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-                // 2. Disable CSRF (not needed for Stateless JWT APIs)
+                // 2. Disable CSRF for APIs
                 .csrf(csrf -> csrf.disable())
-
-                // 3. Set sessions to Stateless
+                // 3. Stateless for JWT
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-                // 4. Match paths based on your AuthController
+                // 4. The Mappings
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll() // Registration, Login, Google SSO
-                        .anyRequest().authenticated() // Everything else is locked
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .anyRequest().authenticated()
                 );
 
         return http.build();
     }
 
-    // This helper method creates the CORS "Permission Slip" for Netlify
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("https://tsigounis.netlify.app", "http://localhost:5173"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setExposedHeaders(List.of("Authorization")); // Important for sending JWTs
-        configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L); // Cache the preflight response for 1 hour
+        CorsConfiguration config = new CorsConfiguration();
+        // Be very careful with the URLs here
+        config.setAllowedOrigins(Arrays.asList("https://tsigounis.netlify.app", "http://localhost:5173"));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+        // This MUST match your AuthController RequestMapping
+        source.registerCorsConfiguration("/api/**", config);
+        source.registerCorsConfiguration("/**", config);
         return source;
     }
 
