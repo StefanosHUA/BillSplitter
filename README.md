@@ -49,3 +49,6 @@ Uploading an entire receipt's worth of items in individual requests would be ine
 1. **Clone the repository**:
    ```bash
    git clone [https://github.com/StefanosHUA/BillSplitter.git](https://github.com/StefanosHUA/BillSplitter.git)
+2. Backend: Navigate to /parea-backend and run ./mvnw spring-boot:run.
+
+3. Frontend: Navigate to /parea-frontend, run npm install, then npm run dev.
