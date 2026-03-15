@@ -3,6 +3,7 @@ package com.parea.backend.security;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -23,16 +24,19 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> {}) // Relies on our WebConfig for Cross-Origin rules
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        // Allow anyone to access the AuthController (Login/Register/Refresh)
-                        .requestMatchers("/api/auth/**").permitAll()
+                // 1. Critical: Enable CORS using the WebConfig settings
+                .cors(Customizer.withDefaults())
 
-                        // TEMPORARY: Keep the rest of the API open so the React frontend doesn't break
-                        // Once React can send the JWT, we will change this to .authenticated()
-                        .anyRequest().permitAll()
+                // 2. Disable CSRF for API usage
+                .csrf(csrf -> csrf.disable())
+
+                // 3. Stateless sessions for JWT
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                // 4. Secure the doors
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/**").permitAll() // Registration/Login stays open
+                        .anyRequest().authenticated() // Everything else (Receipts, etc) requires JWT
                 );
 
         return http.build();
