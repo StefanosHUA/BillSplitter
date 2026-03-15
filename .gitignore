@@ -1,0 +1,14 @@
+# Node/React
+node_modules/
+parea-frontend/node_modules/
+parea-frontend/dist/
+
+# Java/Spring
+parea-backend/target/
+parea-backend/.mvn/
+parea-backend/*.jar
+
+# IDE & OS
+.idea/
+.vscode/
+.DS_Store
